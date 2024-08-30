@@ -1,6 +1,6 @@
-from .di import ServiceCollection as ServiceCollection
-from .di import ServiceLifetime as ServiceLifetime
-from .di import ServiceProvider as ServiceProvider
+from .container import ServiceCollection as ServiceCollection
+from .container import ServiceLifetime as ServiceLifetime
+from .container import ServiceProvider as ServiceProvider
 
 __all__ = [
     "ServiceCollection",
