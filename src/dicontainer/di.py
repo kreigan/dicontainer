@@ -3,9 +3,11 @@ import sys
 from abc import abstractmethod
 from collections.abc import Iterable, MutableSequence
 from enum import Enum
-from typing import Callable, Iterator, Protocol, Self, TypeVar, cast, overload
+from typing import Callable, Iterator, Protocol, TypeVar, cast, overload
 
-from xopslib.util import Ensure
+from typing_extensions import Self
+
+from .util import Ensure
 
 
 class ServiceLifetime(Enum):

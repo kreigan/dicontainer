@@ -5,7 +5,9 @@ description = "Dependency Injection container"
 authors = [
     { name = "Aleksandr Egert", email = "9213855+kreigan@users.noreply.github.com" },
 ]
-dependencies = []
+dependencies = [
+    "typing-extensions>=4.12.2",
+]
 requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "MIT" }
