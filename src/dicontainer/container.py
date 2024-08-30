@@ -53,8 +53,8 @@ class ServiceDescriptor:
     def __init__(
         self,
         service_type: type,
-        /,
         lifetime: ServiceLifetime | None = None,
+        *,
         instance: object | None = None,
         implementation_type: type | None = None,
         factory: _Factory | None = None,
@@ -80,6 +80,9 @@ class ServiceDescriptor:
 
         Ensure.not_none(service_type)
 
+        if not instance and not implementation_type and not factory:
+            raise ValueError("Implementation must be provided")
+
         if not lifetime:
             if not instance:
                 raise ValueError("Lifetime must be specified when not using an instance")
@@ -95,10 +98,11 @@ class ServiceDescriptor:
         if implementation_type and factory:
             raise ValueError("Cannot specify both implementation_type and factory")
 
+        keyed_factory = None
         if factory:
             signature = inspect.signature(factory)
             params = signature.parameters
-            # Keyed service but _ImplementationFactory function is passed
+            # Keyed service but one arg function is passed
             if len(params) == 1 and service_key:
                 raise ValueError("Keyed service factory must take exactly two parameters.")
             elif len(params) == 2 and not service_key:
@@ -107,8 +111,8 @@ class ServiceDescriptor:
                     return cast(_KeyedImplementationFactory, factory)(sp, None)
 
                 # If the key is null, use the same factory signature as non-keyed descriptor
-                factory = null_keyed_factory
-            else:
+                keyed_factory = null_keyed_factory
+            elif len(params) not in (1, 2):
                 raise ValueError(f"Unexpected factory callable: {signature}")
 
         self._service_type = service_type
@@ -116,7 +120,7 @@ class ServiceDescriptor:
 
         self._implementation_instance = instance
         self._implementation_type = implementation_type
-        self._implementation_factory = factory
+        self._implementation_factory = keyed_factory or factory
         self._service_key = service_key
 
     @property
@@ -137,7 +141,7 @@ class ServiceDescriptor:
         If `is_keyed_service` is `True`, `.keyed_implementation_instance()`
         should be called instead.
         """
-        return self._implementation_instance
+        return self._implementation_instance if not self.is_keyed_service else None
 
     @property
     def keyed_implementation_instance(self) -> object | None:

@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 from typing import Any, TypeVar
 
-
 _T = TypeVar("_T")
 
 
@@ -29,7 +28,7 @@ class Ensure:
         """Ensures the given value is not None or raises a TypeError."""
         if value is None:
             msg = message or "Value cannot be None"
-            raise TypeError(msg)
+            raise ValueError(msg)
 
     @staticmethod
     def is_type(value: Any, expected_type: type, message: str | None = None) -> None:
