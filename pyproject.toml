@@ -96,6 +96,7 @@ ignore = [
     "PT011",   # broad is fine
     "PT012",   # FIXME: leave only one statement in `raises`
     "PT013",   # FIXME: import `pytest` instead
+    "SLF001",  # tests are allowed to access protected members
     "TD002",   # FIXME: decide on TODO format
     "TD003",   # FIXME: decide on TODO format
 ]
