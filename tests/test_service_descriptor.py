@@ -2,6 +2,7 @@ from typing import Any
 from unittest.mock import Mock
 
 from pytest import (
+    FixtureRequest,
     fixture,
     mark,
     raises,
@@ -35,30 +36,54 @@ class ServiceDescriptorBuilder:
         builder._service_type = service_type
         return builder
 
+    @property
+    def service_type(self) -> type:
+        return self._service_type
+
     def with_instance(self, instance: object) -> Self:
         builder = self._copy()
         builder._instance = instance
         return builder
+
+    @property
+    def instance(self) -> object | None:
+        return self._instance
 
     def with_factory(self, factory: _Factory) -> Self:
         builder = self._copy()
         builder._factory = factory
         return builder
 
+    @property
+    def factory(self) -> _Factory | None:
+        return self._factory
+
     def with_implementation_type(self, implementation_type: type) -> Self:
         builder = self._copy()
         builder._implementation_type = implementation_type
         return builder
+
+    @property
+    def implementation_type(self) -> type | None:
+        return self._implementation_type
 
     def with_lifetime(self, lifetime: ServiceLifetime) -> Self:
         builder = self._copy()
         builder._lifetime = lifetime
         return builder
 
+    @property
+    def lifetime(self) -> ServiceLifetime | None:
+        return self._lifetime
+
     def with_service_key(self, service_key: str) -> Self:
         builder = self._copy()
         builder._service_key = service_key
         return builder
+
+    @property
+    def service_key(self) -> str | None:
+        return self._service_key
 
     def build(self) -> ServiceDescriptor:
         return ServiceDescriptor(
@@ -181,6 +206,90 @@ def test_implementation_instance(builder: ServiceDescriptorBuilder):
     assert keyed_descriptor.keyed_implementation_instance == instance
 
 
+def test_implementation_type(builder: ServiceDescriptorBuilder):
+    itype = str
+    builder = builder.with_lifetime(ServiceLifetime.SINGLETON).with_implementation_type(itype)
+
+    descriptor = builder.build()
+    assert descriptor.implementation_type == itype
+    with raises(RuntimeError, match="This service descriptor is not keyed"):
+        _ = descriptor.keyed_implementation_type
+
+    keyed_descriptor = builder.with_service_key("test").build()
+    assert keyed_descriptor.implementation_type is None
+    assert keyed_descriptor.keyed_implementation_type == itype
+
+
+def test_implementation_factory(builder: ServiceDescriptorBuilder):
+    def factory(_: ServiceProvider, __: object):
+        return "test"
+
+    builder = builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(factory)
+    descriptor = builder.build()
+
+    assert descriptor.implementation_factory is not None
+    with raises(RuntimeError, match="This service descriptor is not keyed"):
+        _ = descriptor.keyed_implementation_factory
+
+    keyed_descriptor = builder.with_service_key("test").build()
+    assert keyed_descriptor.implementation_factory is None
+    assert keyed_descriptor.keyed_implementation_factory == factory
+
+
+@fixture(
+    params=[
+        ("implementation_instance", "test"),
+        ("implementation_type", "test"),
+        ("implementation_factory", "test"),
+        ("implementation_instance", None),
+        ("implementation_type", None),
+        ("implementation_factory", None),
+    ]
+)
+def str_data(builder: ServiceDescriptorBuilder, request: FixtureRequest) -> tuple[ServiceDescriptor, str]:
+    builder = builder.with_lifetime(ServiceLifetime.SINGLETON)
+    descriptor_str: str = "service_type: str lifetime: SINGLETON "
+
+    impl, service_key = request.param
+
+    if service_key is not None:
+        builder = builder.with_service_key("test")
+        descriptor_str += f"service_key: {service_key} "
+
+    descriptor_str += impl + ": {}"
+
+    value: str | None = None
+    if impl == "implementation_instance":
+        builder = builder.with_instance("test")
+        value = "test"
+    elif impl == "implementation_type":
+        builder = builder.with_implementation_type(str)
+        value = "str"
+    elif impl == "implementation_factory":
+
+        def factory(_: ServiceProvider) -> object:
+            return "test"
+
+        def keyed_factory(_: ServiceProvider, __: object | None) -> object:
+            return "test"
+
+        if service_key is not None:
+            builder = builder.with_factory(keyed_factory)
+            value = "keyed_factory(_: dicontainer.container.ServiceProvider, __: object | None) -> object"
+        else:
+            builder = builder.with_factory(factory)
+            value = "factory(_: dicontainer.container.ServiceProvider) -> object"
+
+    descriptor = builder.build()
+    expected = descriptor_str.format(value)
+    return (descriptor, expected)
+
+
+def test_str(str_data: tuple[ServiceDescriptor, str]):
+    descriptor, expected = str_data
+    assert str(descriptor) == expected
+
+
 class TestKeyedService:
     @fixture
     def keyed_builder(self, builder: ServiceDescriptorBuilder) -> ServiceDescriptorBuilder:
@@ -189,9 +298,3 @@ class TestKeyedService:
     def test_factory_expects_two_args(self, keyed_builder: ServiceDescriptorBuilder):
         with raises(ValueError, match="Keyed service factory must take exactly two parameters"):
             keyed_builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(lambda _: "test").build()
-
-    def test_implementation_instance_is_none(self, keyed_builder: ServiceDescriptorBuilder):
-        instance = "test"
-        descriptor = keyed_builder.with_lifetime(ServiceLifetime.SINGLETON).with_instance(instance).build()
-        assert descriptor.implementation_instance is None
-        assert descriptor.keyed_implementation_instance == instance

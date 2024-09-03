@@ -1,5 +1,6 @@
 import inspect
 import sys
+
 from abc import abstractmethod
 from collections.abc import Iterable, MutableSequence
 from enum import Enum
@@ -141,7 +142,9 @@ class ServiceDescriptor:
         If `is_keyed_service` is `True`, `.keyed_implementation_instance()`
         should be called instead.
         """
-        return self._implementation_instance if not self.is_keyed_service else None
+        if self.is_keyed_service:
+            return None
+        return self._implementation_instance
 
     @property
     def keyed_implementation_instance(self) -> object | None:
@@ -163,6 +166,8 @@ class ServiceDescriptor:
         If `is_keyed_service` is `True`, `.keyed_implementation_type()`
         should be called instead.
         """
+        if self.is_keyed_service:
+            return None
         return self._implementation_type
 
     @property
