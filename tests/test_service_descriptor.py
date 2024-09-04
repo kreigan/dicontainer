@@ -1,10 +1,11 @@
 from typing import Any
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from pytest import (
     FixtureRequest,
     fixture,
     mark,
+    param,
     raises,
 )
 from typing_extensions import Self
@@ -186,7 +187,7 @@ class TestConstructor:
         assert descriptor.implementation_factory is not None, "Factory must be set"
 
         descriptor.implementation_factory(service_provider)
-        factory_func.assert_called_once_with(service_provider, None)
+        factory_func.assert_called_once_with(service_provider, kwargs=None)
 
     @mark.parametrize(
         "func",
@@ -286,6 +287,47 @@ def str_data(builder: ServiceDescriptorBuilder, request: FixtureRequest) -> tupl
 def test_str(str_data: tuple[ServiceDescriptor, str]):
     descriptor, expected = str_data
     assert str(descriptor) == expected
+
+
+def test_get_implementation_type_throws_if_not_set():
+    descriptor = ServiceDescriptor(str, ServiceLifetime.SINGLETON, instance="test")
+    with (
+        patch.object(descriptor, "_implementation_instance", None),
+        raises(ValueError, match="must be non null"),
+    ):
+        _ = descriptor.get_implementation_type()
+
+
+@mark.parametrize(
+    ("key", "impl", "expected"),
+    [
+        param(None, {"instance": "test"}, str, id="not keyed, instance"),
+        param(None, {"implementation_type": str}, str, id="not keyed, implementation_type"),
+        param(None, {"factory": str_factory_func}, str, id="not keyed, factory"),
+        param(None, {"factory": str_keyed_factory_func}, str, id="not keyed, keyed factory"),
+        param("test", {"instance": "test"}, str, id="keyed, instance"),
+        param("test", {"implementation_type": str}, str, id="keyed, implementation_type"),
+        param("test", {"factory": str_keyed_factory_func}, str, id="keyed, factory"),
+    ],
+)
+def test_get_implementation_type(key: object, impl: dict[str, Any], expected: type):
+    descriptor = ServiceDescriptor(str, ServiceLifetime.SINGLETON, service_key=key, **impl)
+    assert descriptor.get_implementation_type() == expected
+
+
+@mark.parametrize(
+    ("key", "impl", "expected"),
+    [
+        param(None, str, str, id="not keyed, implementation_type"),
+        param(None, str_factory_func, str, id="not keyed, factory"),
+        param(None, str_keyed_factory_func, str, id="not keyed, keyed factory"),
+        param("test", str, str, id="keyed, implementation_type"),
+        param("test", str_keyed_factory_func, str, id="keyed, keyed factory"),
+    ],
+)
+def test_describe(key: object | None, impl: type | _Factory, expected: type):
+    descriptor = ServiceDescriptor.describe(str, impl, ServiceLifetime.SINGLETON, service_key=key)
+    assert descriptor.get_implementation_type() == expected
 
 
 class TestKeyedService:

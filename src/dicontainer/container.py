@@ -4,6 +4,7 @@ import sys
 from abc import abstractmethod
 from collections.abc import Iterable, MutableSequence
 from enum import Enum
+from functools import partial
 from typing import Callable, Iterator, Protocol, TypeVar, cast, overload
 
 from typing_extensions import Self
@@ -107,12 +108,9 @@ class ServiceDescriptor:
             if len(params) == 1 and service_key:
                 raise ValueError("Keyed service factory must take exactly two parameters.")
             elif len(params) == 2 and not service_key:
-
-                def null_keyed_factory(sp: ServiceProvider) -> object:
-                    return cast(_KeyedImplementationFactory, factory)(sp, None)
-
+                param_name = list(params.values())[1].name
                 # If the key is null, use the same factory signature as non-keyed descriptor
-                keyed_factory = null_keyed_factory
+                keyed_factory = partial(factory, **{param_name: None})
             elif len(params) not in (1, 2):
                 raise ValueError(f"Unexpected factory callable: {signature}")
 
