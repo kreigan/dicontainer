@@ -22,6 +22,14 @@ class MockServiceProvider(ServiceProvider):
         return Mock(spec=service_type)
 
 
+def str_factory_func(_: ServiceProvider) -> str:
+    return "test"
+
+
+def str_keyed_factory_func(_: ServiceProvider, __: object | None) -> str:
+    return "test"
+
+
 class ServiceDescriptorBuilder:
     def __init__(self):
         self._service_type = str
@@ -221,10 +229,7 @@ def test_implementation_type(builder: ServiceDescriptorBuilder):
 
 
 def test_implementation_factory(builder: ServiceDescriptorBuilder):
-    def factory(_: ServiceProvider, __: object):
-        return "test"
-
-    builder = builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(factory)
+    builder = builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(str_keyed_factory_func)
     descriptor = builder.build()
 
     assert descriptor.implementation_factory is not None
@@ -233,7 +238,7 @@ def test_implementation_factory(builder: ServiceDescriptorBuilder):
 
     keyed_descriptor = builder.with_service_key("test").build()
     assert keyed_descriptor.implementation_factory is None
-    assert keyed_descriptor.keyed_implementation_factory == factory
+    assert keyed_descriptor.keyed_implementation_factory == str_keyed_factory_func
 
 
 @fixture(
@@ -266,19 +271,12 @@ def str_data(builder: ServiceDescriptorBuilder, request: FixtureRequest) -> tupl
         builder = builder.with_implementation_type(str)
         value = "str"
     elif impl == "implementation_factory":
-
-        def factory(_: ServiceProvider) -> object:
-            return "test"
-
-        def keyed_factory(_: ServiceProvider, __: object | None) -> object:
-            return "test"
-
         if service_key is not None:
-            builder = builder.with_factory(keyed_factory)
-            value = "keyed_factory(_: dicontainer.container.ServiceProvider, __: object | None) -> object"
+            builder = builder.with_factory(str_keyed_factory_func)
+            value = "str_keyed_factory_func(_: dicontainer.container.ServiceProvider, __: object | None) -> str"
         else:
-            builder = builder.with_factory(factory)
-            value = "factory(_: dicontainer.container.ServiceProvider) -> object"
+            builder = builder.with_factory(str_factory_func)
+            value = "str_factory_func(_: dicontainer.container.ServiceProvider) -> str"
 
     descriptor = builder.build()
     expected = descriptor_str.format(value)
@@ -297,4 +295,4 @@ class TestKeyedService:
 
     def test_factory_expects_two_args(self, keyed_builder: ServiceDescriptorBuilder):
         with raises(ValueError, match="Keyed service factory must take exactly two parameters"):
-            keyed_builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(lambda _: "test").build()
+            keyed_builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(str_factory_func).build()
