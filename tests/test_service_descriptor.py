@@ -19,7 +19,7 @@ from .fixtures.service_descriptor import (
 
 @pytest.fixture
 def builder() -> ServiceDescriptorBuilder:
-    return ServiceDescriptorBuilder().with_service_type(str)
+    return ServiceDescriptorBuilder(str)
 
 
 class TestConstructor:

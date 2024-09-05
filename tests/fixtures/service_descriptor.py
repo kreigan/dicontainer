@@ -13,16 +13,24 @@ from dicontainer.container import (
 class ServiceDescriptorBuilder:
     """Builder class for creating `ServiceDescriptor` objects."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        service_type: type,
+        instance: object | None = None,
+        factory: _Factory | None = None,
+        implementation_type: type | None = None,
+        lifetime: ServiceLifetime | None = None,
+        service_key: str | None = None,
+    ) -> None:
         """Initializes a new instance of the `ServiceDescriptorBuilder` class
         for `str` service type.
         """
-        self._service_type = str
-        self._instance = None
-        self._factory = None
-        self._implementation_type = None
-        self._lifetime = None
-        self._service_key = None
+        self._service_type = service_type
+        self._instance = instance
+        self._factory = factory
+        self._implementation_type = implementation_type
+        self._lifetime = lifetime
+        self._service_key = service_key
 
     def with_service_type(self, service_type: type) -> Self:
         builder = self._copy()
@@ -89,14 +97,14 @@ class ServiceDescriptorBuilder:
         )
 
     def _copy(self) -> Self:
-        builder = ServiceDescriptorBuilder()
-        builder._service_type(self._service_type)
-        builder._instance = self._instance
-        builder._factory = self._factory
-        builder._implementation_type = self._implementation_type
-        builder._lifetime = self._lifetime
-        builder._service_key = self._service_key
-        return builder  # pyright: ignore[reportReturnType]
+        return ServiceDescriptorBuilder(
+            self._service_type,
+            instance=self._instance,
+            factory=self._factory,
+            implementation_type=self._implementation_type,
+            lifetime=self._lifetime,
+            service_key=self._service_key,
+        )  # pyright: ignore[reportReturnType]
 
     def __repr__(self) -> str:
         return (
