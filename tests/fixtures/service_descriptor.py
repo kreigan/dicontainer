@@ -119,8 +119,10 @@ class ServiceDescriptorBuilder:
 
 
 def str_factory_func(_: ServiceProvider) -> str:
+    """Implementation factory for a `str` service."""
     return "test"
 
 
 def str_keyed_factory_func(_: ServiceProvider, __: object | None) -> str:
+    """Implementation factory for a keyed `str` service."""
     return "test"
