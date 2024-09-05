@@ -93,6 +93,9 @@ ignore = [
     "PT011",   # broad is fine
     "SLF001",  # tests are allowed to access protected members
 ]
+"**/fixtures/**.py" = [
+    "SLF001",  # fixtures are allowed to access protected members
+]
 
 [tool.ruff.lint.isort]
 lines-between-types = 1
