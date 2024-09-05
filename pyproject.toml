@@ -54,49 +54,44 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "ANN202",   # FIXME: decide if need private members annotations
+    "ANN202",   # TODO: decide if need private members annotations
     "C901",     # sometimes things are complicated
-    "COM",      # Black takes care of our commas
-    "D100",     # FIXME: add docstrings
-    "D102",     # FIXME: add docstrings
-    "D104",     # FIXME: add docstrings
-    "D105",     # FIXME: add docstrings
-    "D107",     # FIXME: add docstrings
-    "D202",     # FIXME: fix docstring formatting
-    "D205",     # FIXME: fix docstring formatting
+    "COM",      # Ruff takes care of our commas
+    "D100",     # TODO: add docstrings
+    "D102",     # TODO: add docstrings
+    "D104",     # TODO: add docstrings
+    "D105",     # TODO: add docstrings
+    "D107",     # TODO: add docstrings
+    "D202",     # TODO: fix docstring formatting
+    "D205",     # TODO: fix docstring formatting
     "D417",     # ignore doc for every function parameter
-    "E501",     # leave line-length enforcement to Black
-    "EM101",    # FIXME: use own exceptions
-    "EM102",    # FIXME: use own exceptions
-    "EM103",    # FIXME: use own exceptions
-    "I001",     # FIXME: sort imports
-    "PLC0105",  # FIXME: `TypeVar` covariance naming
-    "PLC0414",  # FIXME: decide
+    "E501",     # leave line-length enforcement to Ruff
+    "EM101",    # TODO: use own exceptions
+    "EM102",    # TODO: use own exceptions
+    "EM103",    # TODO: use own exceptions
+    "PLC0105",  # TODO: `TypeVar` covariance naming
+    "PLC0414",  # TODO: decide
     "PLR0913",  # yes, many arguments, but most have defaults
     "PLR2004",  # numbers are sometimes fine
-    "PLR5501",  # FIXME: use `elif`
-    "RET503",   # FIXME
-    "RET505",   # FIXME: unnecessary `else`
-    "RET506",   # FIXME: unnecessary `else`
-    "S101",     # FIXME: use own exceptions
-    "TRY003",   # FIXME: use own exceptions
-    "UP030",    # FIXME: use own exceptions
-    "UP032",    # FIXME: use own exceptions
+    "PLR5501",  # TODO: use `elif`
+    "RET503",   # TODO
+    "RET505",   # TODO: unnecessary `else`
+    "RET506",   # TODO: unnecessary `else`
+    "S101",     # TODO: use own exceptions
+    "TRY003",   # TODO: use own exceptions
+    "UP030",    # TODO: use own exceptions
+    "UP032",    # TODO: use own exceptions
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "**/test_*" = [
-    "ANN201",  # FIXME: annotations
-    "ANN204",  # FIXME: annotations
-    "ANN401",  # FIXME: annotations
+    "ANN201",  # TODO: annotations
+    "ANN204",  # TODO: annotations
+    "ANN401",  # TODO: annotations
     "D",       # docstrings don't matter in tests
-    "N802",    # FIXME: lower case
-    "PGH003",  # FIXME: ignore specific rules
+    "N802",    # TODO: lower case
     "PT011",   # broad is fine
-    "PT012",   # FIXME: leave only one statement in `raises`
     "SLF001",  # tests are allowed to access protected members
-    "TD002",   # FIXME: decide on TODO format
-    "TD003",   # FIXME: decide on TODO format
 ]
 
 [tool.ruff.lint.isort]

@@ -102,7 +102,7 @@ class ServiceDescriptorBuilder:
         builder._implementation_type = self._implementation_type
         builder._lifetime = self._lifetime
         builder._service_key = self._service_key
-        return builder  # type: ignore
+        return builder  # pyright: ignore[reportReturnType]
 
     def __repr__(self) -> str:
         return (
@@ -124,7 +124,7 @@ def builder() -> ServiceDescriptorBuilder:
 class TestConstructor:
     def test_service_type_cannot_be_None(self):
         with pytest.raises(ValueError):
-            ServiceDescriptor(None, None)  # type: ignore
+            ServiceDescriptor(None, None)  # pyright: ignore[reportArgumentType]
 
     def test_implementation_is_provided(self, builder: ServiceDescriptorBuilder):
         with pytest.raises(ValueError, match="Implementation must be provided"):
@@ -168,7 +168,7 @@ class TestConstructor:
 
     def test_factory_must_be_callable(self, builder: ServiceDescriptorBuilder):
         with pytest.raises(TypeError, match="is not a callable"):
-            builder.with_lifetime(ServiceLifetime.SCOPED).with_factory("test").build()  # type: ignore
+            builder.with_lifetime(ServiceLifetime.SCOPED).with_factory("test").build()  # pyright: ignore[reportArgumentType]
 
     def test_not_keyed_service_accepts_factory_with_two_args(
         self,
@@ -192,7 +192,7 @@ class TestConstructor:
         "func",
         [
             lambda: "test",
-            lambda _, __, ___: "test",  # type: ignore
+            lambda _, __, ___: "test",  # pyright: ignore[reportUnknownArgumentType, reportUnknownLambdaType]
         ],
     )
     def test_factory_takes_only_one_or_two_args(
@@ -323,7 +323,9 @@ def test_get_implementation_type_throws_if_not_set():
         pytest.param(
             "test", {"implementation_type": str}, str, id="keyed, implementation_type"
         ),
-        pytest.param("test", {"factory": str_keyed_factory_func}, str, id="keyed, factory"),
+        pytest.param(
+            "test", {"factory": str_keyed_factory_func}, str, id="keyed, factory"
+        ),
     ],
 )
 def test_get_implementation_type(key: object, impl: dict[str, Any], expected: type):
