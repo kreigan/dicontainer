@@ -173,7 +173,7 @@ class TestConstructor:
 
     def test_not_keyed_service_accepts_factory_with_two_args(
         self,
-        service_provider: ServiceProvider,
+        service_provider_mock: ServiceProvider,
         builder: ServiceDescriptorBuilder,
     ):
         factory_func = Mock(return_value="test")
@@ -186,8 +186,8 @@ class TestConstructor:
         assert descriptor.service_key is None, "Service must be not keyed"
         assert descriptor.implementation_factory is not None, "Factory must be set"
 
-        descriptor.implementation_factory(service_provider)
-        factory_func.assert_called_once_with(service_provider, kwargs=None)
+        descriptor.implementation_factory(service_provider_mock)
+        factory_func.assert_called_once_with(service_provider_mock, kwargs=None)
 
     @mark.parametrize(
         "func",

@@ -15,6 +15,6 @@ class MockServiceProvider(ServiceProvider):
 
 
 @pytest.fixture
-def service_provider() -> MockServiceProvider:
+def service_provider_mock() -> MockServiceProvider:
     """Returns a mock service provider."""
     return MockServiceProvider()
