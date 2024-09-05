@@ -292,15 +292,13 @@ def test_singleton(impl: type | _Factory | object, service_key: object | None):
 
 class TestKeyedService:
     @pytest.fixture
-    def keyed_builder(
-        self, builder: ServiceDescriptorBuilder
-    ) -> ServiceDescriptorBuilder:
+    def builder(self, builder: ServiceDescriptorBuilder) -> ServiceDescriptorBuilder:
         return builder.with_service_key("test")
 
-    def test_factory_expects_two_args(self, keyed_builder: ServiceDescriptorBuilder):
+    def test_factory_expects_two_args(self, builder: ServiceDescriptorBuilder):
         with pytest.raises(
             ValueError, match="Keyed service factory must take exactly two parameters"
         ):
-            keyed_builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(
+            builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(
                 str_factory_func
             ).build()
