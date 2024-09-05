@@ -82,7 +82,6 @@ ignore = [
     "TRY003",   # FIXME: use own exceptions
     "UP030",    # FIXME: use own exceptions
     "UP032",    # FIXME: use own exceptions
-    "UP035",    # FIXME: import from `collections.abc` instead
 ]
 
 [tool.ruff.lint.per-file-ignores]

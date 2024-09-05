@@ -2,10 +2,10 @@ import inspect
 import sys
 
 from abc import abstractmethod
-from collections.abc import Iterable, MutableSequence
+from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from enum import Enum
 from functools import partial
-from typing import Callable, Iterator, Protocol, TypeVar, cast, overload
+from typing import Protocol, TypeVar, cast, overload
 
 from typing_extensions import Self
 
