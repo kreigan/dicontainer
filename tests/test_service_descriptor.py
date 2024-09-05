@@ -18,11 +18,6 @@ from dicontainer.container import (
 )
 
 
-class MockServiceProvider(ServiceProvider):
-    def get_service(self, service_type: type) -> object | None:
-        return Mock(spec=service_type)
-
-
 def str_factory_func(_: ServiceProvider) -> str:
     return "test"
 
@@ -129,11 +124,6 @@ class ServiceDescriptorBuilder:
 @fixture
 def builder() -> ServiceDescriptorBuilder:
     return ServiceDescriptorBuilder().with_service_type(str)
-
-
-@fixture
-def service_provider():
-    return MockServiceProvider()
 
 
 class TestConstructor:
