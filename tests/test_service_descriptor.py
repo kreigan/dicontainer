@@ -1,13 +1,8 @@
 from typing import Any
 from unittest.mock import Mock, patch
 
-from pytest import (
-    FixtureRequest,
-    fixture,
-    mark,
-    param,
-    raises,
-)
+import pytest
+
 from typing_extensions import Self
 
 from dicontainer.container import (
@@ -121,24 +116,24 @@ class ServiceDescriptorBuilder:
         )
 
 
-@fixture
+@pytest.fixture
 def builder() -> ServiceDescriptorBuilder:
     return ServiceDescriptorBuilder().with_service_type(str)
 
 
 class TestConstructor:
     def test_service_type_cannot_be_None(self):
-        with raises(ValueError):
+        with pytest.raises(ValueError):
             ServiceDescriptor(None, None)  # type: ignore
 
     def test_implementation_is_provided(self, builder: ServiceDescriptorBuilder):
-        with raises(ValueError, match="Implementation must be provided"):
+        with pytest.raises(ValueError, match="Implementation must be provided"):
             builder.build()
 
     def test_lifetime_is_required_for_not_singleton(
         self, builder: ServiceDescriptorBuilder
     ):
-        with raises(ValueError, match="Lifetime must be specified"):
+        with pytest.raises(ValueError, match="Lifetime must be specified"):
             builder.with_implementation_type(str).build()
 
     def test_lifetime_is_singleton_for_instance_by_default(self):
@@ -148,19 +143,23 @@ class TestConstructor:
     def test_lifetime_must_be_singleton_for_instance(
         self, builder: ServiceDescriptorBuilder
     ):
-        with raises(ValueError, match="Lifetime must be Singleton"):
+        with pytest.raises(ValueError, match="Lifetime must be Singleton"):
             builder.with_lifetime(ServiceLifetime.TRANSIENT).with_instance(
                 "test"
             ).build()
 
     def test_implementation_mutually_exclusive(self, builder: ServiceDescriptorBuilder):
-        with raises(ValueError, match="instance and implementation_type/factory"):
+        with pytest.raises(
+            ValueError, match="instance and implementation_type/factory"
+        ):
             builder.with_instance("test").with_implementation_type(str).build()
 
-        with raises(ValueError, match="instance and implementation_type/factory"):
+        with pytest.raises(
+            ValueError, match="instance and implementation_type/factory"
+        ):
             builder.with_instance("test").with_factory(lambda _: "test").build()
 
-        with raises(ValueError, match="implementation_type and factory"):
+        with pytest.raises(ValueError, match="implementation_type and factory"):
             (
                 builder.with_lifetime(ServiceLifetime.SCOPED)
                 .with_implementation_type(str)
@@ -168,7 +167,7 @@ class TestConstructor:
             ).build()
 
     def test_factory_must_be_callable(self, builder: ServiceDescriptorBuilder):
-        with raises(TypeError, match="is not a callable"):
+        with pytest.raises(TypeError, match="is not a callable"):
             builder.with_lifetime(ServiceLifetime.SCOPED).with_factory("test").build()  # type: ignore
 
     def test_not_keyed_service_accepts_factory_with_two_args(
@@ -189,7 +188,7 @@ class TestConstructor:
         descriptor.implementation_factory(service_provider_mock)
         factory_func.assert_called_once_with(service_provider_mock, kwargs=None)
 
-    @mark.parametrize(
+    @pytest.mark.parametrize(
         "func",
         [
             lambda: "test",
@@ -199,7 +198,7 @@ class TestConstructor:
     def test_factory_takes_only_one_or_two_args(
         self, func: Any, builder: ServiceDescriptorBuilder
     ):
-        with raises(ValueError, match="Unexpected factory callable"):
+        with pytest.raises(ValueError, match="Unexpected factory callable"):
             builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(func).build()
 
 
@@ -209,7 +208,7 @@ def test_implementation_instance(builder: ServiceDescriptorBuilder):
 
     descriptor = builder.build()
     assert descriptor.implementation_instance == instance
-    with raises(RuntimeError, match="This service descriptor is not keyed"):
+    with pytest.raises(RuntimeError, match="This service descriptor is not keyed"):
         _ = descriptor.keyed_implementation_instance
 
     keyed_descriptor = builder.with_service_key("test").build()
@@ -225,7 +224,7 @@ def test_implementation_type(builder: ServiceDescriptorBuilder):
 
     descriptor = builder.build()
     assert descriptor.implementation_type == itype
-    with raises(RuntimeError, match="This service descriptor is not keyed"):
+    with pytest.raises(RuntimeError, match="This service descriptor is not keyed"):
         _ = descriptor.keyed_implementation_type
 
     keyed_descriptor = builder.with_service_key("test").build()
@@ -240,7 +239,7 @@ def test_implementation_factory(builder: ServiceDescriptorBuilder):
     descriptor = builder.build()
 
     assert descriptor.implementation_factory is not None
-    with raises(RuntimeError, match="This service descriptor is not keyed"):
+    with pytest.raises(RuntimeError, match="This service descriptor is not keyed"):
         _ = descriptor.keyed_implementation_factory
 
     keyed_descriptor = builder.with_service_key("test").build()
@@ -248,7 +247,7 @@ def test_implementation_factory(builder: ServiceDescriptorBuilder):
     assert keyed_descriptor.keyed_implementation_factory == str_keyed_factory_func
 
 
-@fixture(
+@pytest.fixture(
     params=[
         ("implementation_instance", "test"),
         ("implementation_type", "test"),
@@ -259,7 +258,7 @@ def test_implementation_factory(builder: ServiceDescriptorBuilder):
     ]
 )
 def str_data(
-    builder: ServiceDescriptorBuilder, request: FixtureRequest
+    builder: ServiceDescriptorBuilder, request: pytest.FixtureRequest
 ) -> tuple[ServiceDescriptor, str]:
     builder = builder.with_lifetime(ServiceLifetime.SINGLETON)
     descriptor_str: str = "service_type: str lifetime: SINGLETON "
@@ -301,30 +300,30 @@ def test_get_implementation_type_throws_if_not_set():
     descriptor = ServiceDescriptor(str, ServiceLifetime.SINGLETON, instance="test")
     with (
         patch.object(descriptor, "_implementation_instance", None),
-        raises(ValueError, match="must be non null"),
+        pytest.raises(ValueError, match="must be non null"),
     ):
         _ = descriptor.get_implementation_type()
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("key", "impl", "expected"),
     [
-        param(None, {"instance": "test"}, str, id="not keyed, instance"),
-        param(
+        pytest.param(None, {"instance": "test"}, str, id="not keyed, instance"),
+        pytest.param(
             None, {"implementation_type": str}, str, id="not keyed, implementation_type"
         ),
-        param(None, {"factory": str_factory_func}, str, id="not keyed, factory"),
-        param(
+        pytest.param(None, {"factory": str_factory_func}, str, id="not keyed, factory"),
+        pytest.param(
             None,
             {"factory": str_keyed_factory_func},
             str,
             id="not keyed, keyed factory",
         ),
-        param("test", {"instance": "test"}, str, id="keyed, instance"),
-        param(
+        pytest.param("test", {"instance": "test"}, str, id="keyed, instance"),
+        pytest.param(
             "test", {"implementation_type": str}, str, id="keyed, implementation_type"
         ),
-        param("test", {"factory": str_keyed_factory_func}, str, id="keyed, factory"),
+        pytest.param("test", {"factory": str_keyed_factory_func}, str, id="keyed, factory"),
     ],
 )
 def test_get_implementation_type(key: object, impl: dict[str, Any], expected: type):
@@ -334,14 +333,14 @@ def test_get_implementation_type(key: object, impl: dict[str, Any], expected: ty
     assert descriptor.get_implementation_type() == expected
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     ("key", "impl", "expected"),
     [
-        param(None, str, str, id="not keyed, implementation_type"),
-        param(None, str_factory_func, str, id="not keyed, factory"),
-        param(None, str_keyed_factory_func, str, id="not keyed, keyed factory"),
-        param("test", str, str, id="keyed, implementation_type"),
-        param("test", str_keyed_factory_func, str, id="keyed, keyed factory"),
+        pytest.param(None, str, str, id="not keyed, implementation_type"),
+        pytest.param(None, str_factory_func, str, id="not keyed, factory"),
+        pytest.param(None, str_keyed_factory_func, str, id="not keyed, keyed factory"),
+        pytest.param("test", str, str, id="keyed, implementation_type"),
+        pytest.param("test", str_keyed_factory_func, str, id="keyed, keyed factory"),
     ],
 )
 def test_describe(key: object | None, impl: type | _Factory, expected: type):
@@ -371,12 +370,12 @@ def test_scoped():
     assert descriptor.lifetime == ServiceLifetime.SCOPED
 
 
-@mark.parametrize(
+@pytest.mark.parametrize(
     "impl",
     [str, str_keyed_factory_func, "test_instance"],
     ids=["type", "factory", "instance"],
 )
-@mark.parametrize("service_key", [None, "test"], ids=["not keyed", "keyed"])
+@pytest.mark.parametrize("service_key", [None, "test"], ids=["not keyed", "keyed"])
 def test_singleton(impl: type | _Factory | object, service_key: object | None):
     method_to_mock = "describe" if impl == "test_instance" else "using_instance"
     with patch.object(ServiceDescriptor, method_to_mock) as mock:
@@ -389,14 +388,14 @@ def test_singleton(impl: type | _Factory | object, service_key: object | None):
 
 
 class TestKeyedService:
-    @fixture
+    @pytest.fixture
     def keyed_builder(
         self, builder: ServiceDescriptorBuilder
     ) -> ServiceDescriptorBuilder:
         return builder.with_service_key("test")
 
     def test_factory_expects_two_args(self, keyed_builder: ServiceDescriptorBuilder):
-        with raises(
+        with pytest.raises(
             ValueError, match="Keyed service factory must take exactly two parameters"
         ):
             keyed_builder.with_lifetime(ServiceLifetime.SCOPED).with_factory(
