@@ -1,4 +1,5 @@
 {
     "coverage-gutters.showGutterCoverage": false,
     "coverage-gutters.showLineCoverage": true,
+    "ruff.lineLength": 88,
 }

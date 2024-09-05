@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from typing import Any, TypeVar
 
+
 _T = TypeVar("_T")
 
 
@@ -41,7 +42,9 @@ class Ensure:
             valid = isinstance(value, expected_type)
 
         if not valid:
-            raise TypeError(message or f"Expected {expected_type} but got {type(value)}")
+            raise TypeError(
+                message or f"Expected {expected_type} but got {type(value)}"
+            )
 
     @staticmethod
     def is_iterable(value: Any, message: str | None = None) -> None:
@@ -49,7 +52,9 @@ class Ensure:
         Ensure.is_type(value, Iterable, message)
 
     @staticmethod
-    def all_in_iterable(iterable: Iterable[_T], expected_type: _T, message: str | None = None) -> None:
+    def all_in_iterable(
+        iterable: Iterable[_T], expected_type: _T, message: str | None = None
+    ) -> None:
         """Ensures all values in the given iterable are of the expected type or raises a TypeError."""
         Ensure.is_iterable(iterable)
         for item in iterable:

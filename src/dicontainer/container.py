@@ -87,7 +87,9 @@ class ServiceDescriptor:
 
         if not lifetime:
             if not instance:
-                raise ValueError("Lifetime must be specified when not using an instance")
+                raise ValueError(
+                    "Lifetime must be specified when not using an instance"
+                )
             else:
                 lifetime = ServiceLifetime.SINGLETON
 
@@ -95,7 +97,9 @@ class ServiceDescriptor:
             raise ValueError("Lifetime must be Singleton when using an instance")
 
         if instance and (implementation_type or factory):
-            raise ValueError("Cannot specify both instance and implementation_type/factory")
+            raise ValueError(
+                "Cannot specify both instance and implementation_type/factory"
+            )
 
         if implementation_type and factory:
             raise ValueError("Cannot specify both implementation_type and factory")
@@ -106,7 +110,9 @@ class ServiceDescriptor:
             params = signature.parameters
             # Keyed service but one arg function is passed
             if len(params) == 1 and service_key:
-                raise ValueError("Keyed service factory must take exactly two parameters.")
+                raise ValueError(
+                    "Keyed service factory must take exactly two parameters."
+                )
             elif len(params) == 2 and not service_key:
                 param_name = list(params.values())[1].name
                 # If the key is null, use the same factory signature as non-keyed descriptor
@@ -277,10 +283,14 @@ class ServiceDescriptor:
             service_key (object): The key used to identify the service.
 
         """
-        return cls(service_type, factory=factory, lifetime=lifetime, service_key=service_key)
+        return cls(
+            service_type, factory=factory, lifetime=lifetime, service_key=service_key
+        )
 
     def __str__(self) -> str:
-        lifetime = f"service_type: {self.service_type.__name__} lifetime: {self.lifetime.name}"
+        lifetime = (
+            f"service_type: {self.service_type.__name__} lifetime: {self.lifetime.name}"
+        )
 
         if self.is_keyed_service:
             lifetime += f" service_key: {self.service_key}"
@@ -290,7 +300,9 @@ class ServiceDescriptor:
 
             if self.keyed_implementation_factory:
                 signature = inspect.signature(self.keyed_implementation_factory)
-                factory_method = self.keyed_implementation_factory.__name__ + str(signature)
+                factory_method = self.keyed_implementation_factory.__name__ + str(
+                    signature
+                )
                 return f"{lifetime} implementation_factory: {factory_method}"
 
             return f"{lifetime} implementation_instance: {self.keyed_implementation_instance}"
@@ -312,16 +324,22 @@ class ServiceDescriptor:
             elif self.implementation_instance:
                 return type(self.implementation_instance)
             elif self.implementation_factory:
-                return self._get_factory_implementation_type(self.implementation_factory)
+                return self._get_factory_implementation_type(
+                    self.implementation_factory
+                )
         else:
             if self.keyed_implementation_type:
                 return self.keyed_implementation_type
             elif self.keyed_implementation_instance:
                 return type(self.keyed_implementation_instance)
             elif self.keyed_implementation_factory:
-                return self._get_factory_implementation_type(self.keyed_implementation_factory)
+                return self._get_factory_implementation_type(
+                    self.keyed_implementation_factory
+                )
 
-        raise ValueError("implementation_type, implementation_instance, or implementation_factory must be non null")
+        raise ValueError(
+            "implementation_type, implementation_instance, or implementation_factory must be non null"
+        )
 
     @classmethod
     def describe(
@@ -347,10 +365,14 @@ class ServiceDescriptor:
         if isinstance(implementation, type):
             return cls.using_type(service_type, implementation, lifetime, service_key)
         elif callable(implementation):
-            return cls.using_factory(service_type, implementation, lifetime, service_key)
+            return cls.using_factory(
+                service_type, implementation, lifetime, service_key
+            )
 
     @classmethod
-    def transient(cls, service: type, implementation: type | _ImplementationFactory) -> Self:
+    def transient(
+        cls, service: type, implementation: type | _ImplementationFactory
+    ) -> Self:
         """Creates an instance of `ServiceDescriptor` with the specified
         `service`, `implementation`, and `ServiceLifetime.TRANSIENT` lifetime.
         `implementation` can be a type or a factory function.
@@ -377,10 +399,14 @@ class ServiceDescriptor:
             implementation (type | Callable): The type of the implementation or a factory function.
             service_key (object): The key used to identify the service.
         """
-        return cls.describe(service, implementation, ServiceLifetime.TRANSIENT, service_key)
+        return cls.describe(
+            service, implementation, ServiceLifetime.TRANSIENT, service_key
+        )
 
     @classmethod
-    def scoped(cls, service: type, implementation: type | _ImplementationFactory) -> Self:
+    def scoped(
+        cls, service: type, implementation: type | _ImplementationFactory
+    ) -> Self:
         """Creates an instance of `ServiceDescriptor` with the specified
         `service`, `implementation`, and `ServiceLifetime.SCOPED` lifetime.
         `implementation` can be a type or a factory function.
@@ -408,10 +434,14 @@ class ServiceDescriptor:
             implementation (type | Callable): The type of the implementation or a factory function.
             service_key (object): The key used to identify the service.
         """
-        return cls.describe(service, implementation, ServiceLifetime.SCOPED, service_key)
+        return cls.describe(
+            service, implementation, ServiceLifetime.SCOPED, service_key
+        )
 
     @classmethod
-    def singleton(cls, service: type, implementation: type | _ImplementationFactory | object) -> Self:
+    def singleton(
+        cls, service: type, implementation: type | _ImplementationFactory | object
+    ) -> Self:
         """Creates an instance of `ServiceDescriptor` with the specified
         `service`, `implementation`, and `ServiceLifetime.SINGLETON` lifetime.
         `implementation` can be a type, an instance, or a factory function.
@@ -444,7 +474,9 @@ class ServiceDescriptor:
         """
         if implementation is not type and not callable(implementation):
             return cls.using_instance(service, implementation, service_key)
-        return cls.describe(service, implementation, ServiceLifetime.SINGLETON, service_key)
+        return cls.describe(
+            service, implementation, ServiceLifetime.SINGLETON, service_key
+        )
 
     def _raise_not_keyed_error(self):
         raise RuntimeError("This service descriptor is not keyed.")
@@ -452,8 +484,12 @@ class ServiceDescriptor:
     @classmethod
     def _get_factory_implementation_type(cls, factory: _Factory) -> type:
         factory_return_type = inspect.signature(factory).return_annotation
-        assert factory_return_type is not inspect.Signature.empty, "Factory must have a return type annotation"
-        assert isinstance(factory_return_type, type), "Factory return type must be a type"
+        assert (
+            factory_return_type is not inspect.Signature.empty
+        ), "Factory must have a return type annotation"
+        assert isinstance(
+            factory_return_type, type
+        ), "Factory return type must be a type"
         return factory_return_type
 
 
@@ -478,14 +514,18 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
     def _check_readonly(self) -> None:
         if self._readonly:
-            raise RuntimeError("The service collection cannot be modified because it is read-only.")
+            raise RuntimeError(
+                "The service collection cannot be modified because it is read-only."
+            )
 
     def __len__(self) -> int:
         return len(self._descriptors)
 
     ### Sequence implementation
 
-    def index(self, value: ServiceDescriptor, start: int = 0, stop: int = sys.maxsize) -> int:
+    def index(
+        self, value: ServiceDescriptor, start: int = 0, stop: int = sys.maxsize
+    ) -> int:
         Ensure.is_type(value, ServiceDescriptor)
         return self._descriptors.index(value, start, stop)
 
@@ -516,7 +556,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
     @overload
     def __getitem__(self, index: slice) -> list[ServiceDescriptor]: ...
 
-    def __getitem__(self, index: int | slice) -> ServiceDescriptor | list[ServiceDescriptor]:
+    def __getitem__(
+        self, index: int | slice
+    ) -> ServiceDescriptor | list[ServiceDescriptor]:
         return self._descriptors[index]
 
     @overload
@@ -525,7 +567,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
     @overload
     def __setitem__(self, index: slice, value: Iterable[ServiceDescriptor]) -> None: ...
 
-    def __setitem__(self, index: int | slice, value: ServiceDescriptor | Iterable[ServiceDescriptor]) -> None:
+    def __setitem__(
+        self, index: int | slice, value: ServiceDescriptor | Iterable[ServiceDescriptor]
+    ) -> None:
         self._check_readonly()
         if isinstance(index, int):
             Ensure.is_type(value, ServiceDescriptor)
@@ -586,7 +630,11 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
             descriptor (ServiceDescriptor): The service descriptor to add.
         """
         Ensure.not_none(descriptor)
-        if any(d.service_type == descriptor.service_type and d.service_key == descriptor.service_key for d in self):
+        if any(
+            d.service_type == descriptor.service_type
+            and d.service_key == descriptor.service_key
+            for d in self
+        ):
             return
 
         self.append(descriptor)
@@ -603,7 +651,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         for descriptor in descriptors:
             self.try_add(descriptor)
 
-    def try_add_transient(self, service: type, implementation: type | _ImplementationFactory | None = None) -> None:
+    def try_add_transient(
+        self, service: type, implementation: type | _ImplementationFactory | None = None
+    ) -> None:
         """Adds the specified `service` as a `ServiceLifetime.Transient` service
         to the collection if the service type hasn't already been registered. If
         `implementation` is `None`, the service type is used as the implementation.
@@ -615,7 +665,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         descriptor = ServiceDescriptor.transient(service, implementation or service)
         self.try_add(descriptor)
 
-    def try_add_scoped(self, service: type, implementation: type | _ImplementationFactory | None = None) -> None:
+    def try_add_scoped(
+        self, service: type, implementation: type | _ImplementationFactory | None = None
+    ) -> None:
         """Adds the specified `service` as a `ServiceLifetime.Scoped` service
         to the collection if the service type hasn't already been registered. If
         `implementation` is `None`, the service type is used as the implementation.
@@ -627,7 +679,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         descriptor = ServiceDescriptor.scoped(service, implementation or service)
         self.try_add(descriptor)
 
-    def try_add_singleton(self, service: type, implementation: type | _ImplementationFactory | None = None) -> None:
+    def try_add_singleton(
+        self, service: type, implementation: type | _ImplementationFactory | None = None
+    ) -> None:
         """Adds the specified `service` as a `ServiceLifetime.Singleton` service
         to the collection if the service type hasn't already been registered. If
         `implementation` is `None`, the service type is used as the implementation.
@@ -640,7 +694,9 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         descriptor = ServiceDescriptor.singleton(service, implementation or service)
         self.try_add(descriptor)
 
-    def try_add_enumerable(self, descriptor: ServiceDescriptor | Iterable[ServiceDescriptor]) -> None:
+    def try_add_enumerable(
+        self, descriptor: ServiceDescriptor | Iterable[ServiceDescriptor]
+    ) -> None:
         """Adds a `ServiceDescriptor` if an existing descriptor with the same
         `service_type` and an implementation that does not already exist in the
         collection.
@@ -660,7 +716,10 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
             implementation_type = descriptor.get_implementation_type()
 
-            if implementation_type is object or implementation_type is descriptor.service_type:
+            if (
+                implementation_type is object
+                or implementation_type is descriptor.service_type
+            ):
                 raise ValueError(
                     "Implementation type cannot be '{0}' because it is indistinguishable from other services registered for '{1}'.".format(
                         implementation_type, descriptor.service_type
@@ -698,7 +757,10 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         Ensure.not_none(descriptor)
 
         for i, service in enumerate(self):
-            if service.service_type == descriptor.service_type and service.service_key == descriptor.service_key:
+            if (
+                service.service_type == descriptor.service_type
+                and service.service_key == descriptor.service_key
+            ):
                 del self[i]
                 break
 
@@ -728,14 +790,22 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         lifetime: ServiceLifetime,
     ) -> Self:
         if isinstance(implementation, type):
-            descriptor = ServiceDescriptor(service_type, implementation_type=implementation, lifetime=lifetime)
+            descriptor = ServiceDescriptor(
+                service_type, implementation_type=implementation, lifetime=lifetime
+            )
         else:
-            descriptor = ServiceDescriptor(service_type, factory=implementation, lifetime=lifetime)
+            descriptor = ServiceDescriptor(
+                service_type, factory=implementation, lifetime=lifetime
+            )
 
         self.append(descriptor)
         return self
 
-    def add_transient(self, service_type: type, implementation: type | _ImplementationFactory | None = None) -> Self:
+    def add_transient(
+        self,
+        service_type: type,
+        implementation: type | _ImplementationFactory | None = None,
+    ) -> Self:
         """Adds a transient service of the type specified in `service_type` with an
         implementation of the type or factory specified in `implementation`. If
         `implementation` is `None`, the service type is used as the implementation.
@@ -749,9 +819,15 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         """
 
         Ensure.not_none(service_type)
-        return self._add(service_type, implementation or service_type, ServiceLifetime.TRANSIENT)
+        return self._add(
+            service_type, implementation or service_type, ServiceLifetime.TRANSIENT
+        )
 
-    def add_scoped(self, service_type: type, implementation: type | _ImplementationFactory | None = None) -> Self:
+    def add_scoped(
+        self,
+        service_type: type,
+        implementation: type | _ImplementationFactory | None = None,
+    ) -> Self:
         """Adds a scoped service of the type specified in `service_type` with an
         implementation of the type or factory specified in `implementation`. If
         `implementation` is `None`, the service type is used as the implementation.
@@ -765,10 +841,14 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         """
 
         Ensure.not_none(service_type)
-        return self._add(service_type, implementation or service_type, ServiceLifetime.SCOPED)
+        return self._add(
+            service_type, implementation or service_type, ServiceLifetime.SCOPED
+        )
 
     def add_singleton(
-        self, service_type: type, implementation: type | _ImplementationFactory | object | None = None
+        self,
+        service_type: type,
+        implementation: type | _ImplementationFactory | object | None = None,
     ) -> Self:
         """Adds a singleton service of the type specified in `service_type` with an
         implementation of the type or factory specified in `implementation`. If
@@ -785,5 +865,7 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
         Ensure.not_none(service_type)
 
-        self.append(ServiceDescriptor.singleton(service_type, implementation or service_type))
+        self.append(
+            ServiceDescriptor.singleton(service_type, implementation or service_type)
+        )
         return self
