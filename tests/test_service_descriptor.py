@@ -14,7 +14,7 @@ from dicontainer.container import (
     ServiceDescriptor,
     ServiceLifetime,
     ServiceProvider,
-    _Factory,  # type: ignore
+    _Factory,  # pyright: ignore [reportPrivateUsage]
 )
 
 
