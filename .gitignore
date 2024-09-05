@@ -130,6 +130,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# pyenv environment version
+.python-version
+
 # Spyder project settings
 .spyderproject
 .spyproject

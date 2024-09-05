@@ -330,6 +330,35 @@ def test_describe(key: object | None, impl: type | _Factory, expected: type):
     assert descriptor.get_implementation_type() == expected
 
 
+def test_transient():
+    descriptor = ServiceDescriptor.transient(str, str_factory_func)
+    assert descriptor.lifetime == ServiceLifetime.TRANSIENT
+
+    descriptor = ServiceDescriptor.keyed_transient(str, str_keyed_factory_func, service_key="test")
+    assert descriptor.lifetime == ServiceLifetime.TRANSIENT
+
+
+def test_scoped():
+    descriptor = ServiceDescriptor.scoped(str, str_factory_func)
+    assert descriptor.lifetime == ServiceLifetime.SCOPED
+
+    descriptor = ServiceDescriptor.keyed_scoped(str, str_keyed_factory_func, service_key="test")
+    assert descriptor.lifetime == ServiceLifetime.SCOPED
+
+
+@mark.parametrize("impl", [str, str_keyed_factory_func, "test_instance"], ids=["type", "factory", "instance"])
+@mark.parametrize("service_key", [None, "test"], ids=["not keyed", "keyed"])
+def test_singleton(impl: type | _Factory | object, service_key: object | None):
+    method_to_mock = "describe" if impl == "test_instance" else "using_instance"
+    with patch.object(ServiceDescriptor, method_to_mock) as mock:
+        if service_key is not None:
+            descriptor = ServiceDescriptor.keyed_singleton(str, impl, "test")
+        else:
+            descriptor = ServiceDescriptor.singleton(str, impl)
+    mock.assert_not_called()
+    assert descriptor.lifetime == ServiceLifetime.SINGLETON
+
+
 class TestKeyedService:
     @fixture
     def keyed_builder(self, builder: ServiceDescriptorBuilder) -> ServiceDescriptorBuilder:

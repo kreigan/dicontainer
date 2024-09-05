@@ -421,7 +421,7 @@ class ServiceDescriptor:
             implementation (type | object | Callable): The type of the implementation, an instance object,
                                                        or a factory function.
         """
-        if isinstance(implementation, object):
+        if implementation is not type and not callable(implementation):
             return cls.using_instance(service, implementation)
         return cls.describe(service, implementation, ServiceLifetime.SINGLETON)
 
@@ -442,7 +442,7 @@ class ServiceDescriptor:
                                                        or a factory function.
             service_key (object): The key used to identify the service.
         """
-        if isinstance(implementation, object):
+        if implementation is not type and not callable(implementation):
             return cls.using_instance(service, implementation, service_key)
         return cls.describe(service, implementation, ServiceLifetime.SINGLETON, service_key)
 
