@@ -12,6 +12,7 @@ from dicontainer.container import (
 
 from .fixtures.service_descriptor import (
     ServiceDescriptorBuilder,
+    ServiceFactory,
     str_factory_func,
     str_keyed_factory_func,
 )
@@ -42,12 +43,10 @@ class TestConstructor:
         assert descriptor.lifetime == ServiceLifetime.SINGLETON
 
     def test_lifetime_must_be_singleton_for_instance(
-        self, builder: ServiceDescriptorBuilder
+        self, service_factory: ServiceFactory
     ):
         with pytest.raises(ValueError, match="Lifetime must be Singleton"):
-            builder.with_lifetime(ServiceLifetime.TRANSIENT).with_instance(
-                "test"
-            ).build()
+            _ = service_factory.transient.instance
 
     def test_implementation_mutually_exclusive(self, builder: ServiceDescriptorBuilder):
         with pytest.raises(

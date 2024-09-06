@@ -1,5 +1,9 @@
 """Contains `ServiceDescriptor` fixtures."""
 
+from typing import Protocol
+
+import pytest
+
 from typing_extensions import Self
 
 from dicontainer.container import (
@@ -20,7 +24,7 @@ class ServiceDescriptorBuilder:
         factory: _Factory | None = None,
         implementation_type: type | None = None,
         lifetime: ServiceLifetime | None = None,
-        service_key: str | None = None,
+        service_key: object | None = None,
     ) -> None:
         """Initializes a new instance of the `ServiceDescriptorBuilder` class
         for `str` service type.
@@ -77,13 +81,13 @@ class ServiceDescriptorBuilder:
     def lifetime(self) -> ServiceLifetime | None:
         return self._lifetime
 
-    def with_service_key(self, service_key: str) -> Self:
+    def with_service_key(self, service_key: object) -> Self:
         builder = self._copy()
         builder._service_key = service_key
         return builder
 
     @property
-    def service_key(self) -> str | None:
+    def service_key(self) -> object | None:
         return self._service_key
 
     def build(self) -> ServiceDescriptor:
@@ -118,6 +122,9 @@ class ServiceDescriptorBuilder:
         )
 
 
+_Builder = ServiceDescriptorBuilder
+
+
 def str_factory_func(_: ServiceProvider) -> str:
     """Implementation factory for a `str` service."""
     return "test"
@@ -126,3 +133,91 @@ def str_factory_func(_: ServiceProvider) -> str:
 def str_keyed_factory_func(_: ServiceProvider, __: object | None) -> str:
     """Implementation factory for a keyed `str` service."""
     return "test"
+
+
+class Service(Protocol):
+    """Service protocol for testing. Contains a single method `do`."""
+
+    def do(self) -> None: ...
+
+
+class DummyService(Service):
+    """Dummy service implementation for testing."""
+
+    def do(self) -> None:
+        pass
+
+
+@pytest.fixture
+def service_builder() -> _Builder:
+    """Service descriptor builder fixture."""
+    return _Builder(Service)
+
+
+@pytest.fixture
+def keyed_builder(service_builder: _Builder) -> _Builder:
+    """Service descriptor builder fixture for keyed services.
+    Uses 'my_service' as the default service key.
+    """
+
+    return service_builder.with_service_key("my_service")
+
+
+class ServiceFactory:
+    """Factory class for creating `ServiceDescriptor` objects using chaining."""
+
+    def __init__(self, builder: _Builder) -> None:
+        self._builder = builder
+
+    class _LifetimedServiceFactory:
+        def __init__(self, builder: _Builder) -> None:
+            self._builder = builder
+
+        def with_key(self, service_key: object = "my_service") -> Self:
+            self._builder = self._builder.with_service_key(service_key)
+            return self
+
+        @property
+        def instance(self) -> ServiceDescriptor:
+            return self._builder.with_instance(DummyService()).build()
+
+        @property
+        def type(self) -> ServiceDescriptor:
+            return self._builder.with_implementation_type(DummyService).build()
+
+        @property
+        def factory(self) -> ServiceDescriptor:
+            if self._builder.service_key is not None:
+                return self._builder.with_factory(lambda _, __: DummyService()).build()
+            else:
+                return self._builder.with_factory(lambda _: DummyService()).build()
+
+    @property
+    def singleton(self) -> "_LifetimedServiceFactory":
+        return self._LifetimedServiceFactory(
+            self._builder.with_lifetime(ServiceLifetime.SINGLETON)
+        )
+
+    @property
+    def transient(self) -> "_LifetimedServiceFactory":
+        return self._LifetimedServiceFactory(
+            self._builder.with_lifetime(ServiceLifetime.TRANSIENT)
+        )
+
+    @property
+    def scoped(self) -> "_LifetimedServiceFactory":
+        return self._LifetimedServiceFactory(
+            self._builder.with_lifetime(ServiceLifetime.SCOPED)
+        )
+
+
+@pytest.fixture
+def service_factory(service_builder: _Builder) -> ServiceFactory:
+    """Factory fixture for creating `ServiceDescriptor` objects using chaining."""
+    return ServiceFactory(service_builder)
+
+
+@pytest.fixture
+def keyed_service_factory(keyed_builder: _Builder) -> ServiceFactory:
+    """Factory fixture for creating keyed `ServiceDescriptor` objects using chaining."""
+    return ServiceFactory(keyed_builder)
