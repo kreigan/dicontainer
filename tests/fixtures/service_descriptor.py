@@ -1,6 +1,7 @@
 """Contains `ServiceDescriptor` fixtures."""
 
 from typing import Protocol
+from uuid import uuid4
 
 import pytest
 
@@ -166,49 +167,82 @@ def keyed_builder(service_builder: _Builder) -> _Builder:
 class ServiceFactory:
     """Factory class for creating `ServiceDescriptor` objects using chaining."""
 
-    def __init__(self, builder: _Builder) -> None:
+    def __init__(
+        self, builder: _Builder, service_type: type[Service] | None = None
+    ) -> None:
+        """Initializes a new instance of the ServiceDescriptor class.
+
+        Args:
+            builder (_Builder): The builder object used to build the service.
+            service_type (type[Service], optional): The type of the service. Defaults to DummyService.
+        """
         self._builder = builder
+        self._service_type = service_type
 
     class _LifetimedServiceFactory:
-        def __init__(self, builder: _Builder) -> None:
+        def __init__(self, factory: "ServiceFactory", builder: _Builder) -> None:
+            self._factory = factory
             self._builder = builder
+            self._service_type = self._factory.service_type
 
         def with_key(self, service_key: object = "my_service") -> Self:
             self._builder = self._builder.with_service_key(service_key)
             return self
 
-        @property
-        def instance(self) -> ServiceDescriptor:
-            return self._builder.with_instance(DummyService()).build()
+        def with_instance(
+            self, service_type: type[Service] | None = None
+        ) -> ServiceDescriptor:
+            instance = service_type() if service_type else self._service_type()
+            return self._builder.with_instance(instance).build()
 
-        @property
-        def type(self) -> ServiceDescriptor:
-            return self._builder.with_implementation_type(DummyService).build()
+        def with_type(
+            self, service_type: type[Service] | None = None
+        ) -> ServiceDescriptor:
+            return self._builder.with_implementation_type(
+                service_type or self._builder.service_type
+            ).build()
 
-        @property
-        def factory(self) -> ServiceDescriptor:
+        def with_factory(
+            self, service_type: type[Service] | None = None
+        ) -> ServiceDescriptor:
+            instance_func = service_type or self._service_type
             if self._builder.service_key is not None:
-                return self._builder.with_factory(lambda _, __: DummyService()).build()
+                return self._builder.with_factory(lambda _, __: instance_func()).build()
             else:
-                return self._builder.with_factory(lambda _: DummyService()).build()
+                return self._builder.with_factory(lambda _: instance_func()).build()
 
     @property
     def singleton(self) -> "_LifetimedServiceFactory":
         return self._LifetimedServiceFactory(
-            self._builder.with_lifetime(ServiceLifetime.SINGLETON)
+            self,
+            self._builder.with_lifetime(ServiceLifetime.SINGLETON),
         )
 
     @property
     def transient(self) -> "_LifetimedServiceFactory":
         return self._LifetimedServiceFactory(
-            self._builder.with_lifetime(ServiceLifetime.TRANSIENT)
+            self,
+            self._builder.with_lifetime(ServiceLifetime.TRANSIENT),
         )
 
     @property
     def scoped(self) -> "_LifetimedServiceFactory":
         return self._LifetimedServiceFactory(
-            self._builder.with_lifetime(ServiceLifetime.SCOPED)
+            self,
+            self._builder.with_lifetime(ServiceLifetime.SCOPED),
         )
+
+    @property
+    def service_type(self) -> type[Service]:
+        def _generate_type() -> type[Service]:
+            name = f"Service_{uuid4().hex}"
+            return type(name, (Service,), {"do": lambda _: None})  # pyright: ignore[reportUnknownLambdaType]
+
+        return self._service_type or _generate_type()
+
+    @service_type.setter
+    def service_type(self, service_type: type[Service] | None) -> None:
+        self._service_type = service_type
 
 
 @pytest.fixture

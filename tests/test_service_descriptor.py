@@ -46,7 +46,7 @@ class TestConstructor:
         self, service_factory: ServiceFactory
     ):
         with pytest.raises(ValueError, match="Lifetime must be Singleton"):
-            _ = service_factory.transient.instance
+            _ = service_factory.transient.with_instance()
 
     def test_implementation_mutually_exclusive(self, builder: ServiceDescriptorBuilder):
         with pytest.raises(

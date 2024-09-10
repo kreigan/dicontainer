@@ -16,9 +16,9 @@ def is_iterable(value: Any) -> bool:
     """
     try:
         iter(value)
-        return True
     except TypeError:
         return False
+    return True
 
 
 class Ensure:
@@ -42,9 +42,7 @@ class Ensure:
             valid = isinstance(value, expected_type)
 
         if not valid:
-            raise TypeError(
-                message or f"Expected {expected_type} but got {type(value)}"
-            )
+            raise TypeError(message or f"Expected {expected_type} but got {value}")
 
     @staticmethod
     def is_iterable(value: Any, message: str | None = None) -> None:
