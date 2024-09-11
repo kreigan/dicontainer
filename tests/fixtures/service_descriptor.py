@@ -181,57 +181,68 @@ class ServiceFactory:
         self._service_type = service_type
 
     class _LifetimedServiceFactory:
-        def __init__(self, factory: "ServiceFactory", builder: _Builder) -> None:
+        def __init__(
+            self, factory: "ServiceFactory", lifetime: ServiceLifetime
+        ) -> None:
             self._factory = factory
-            self._builder = builder
-            self._service_type = self._factory.service_type
+            self._builder = factory._builder.with_lifetime(lifetime)
 
-        def with_key(self, service_key: object = "my_service") -> Self:
-            self._builder = self._builder.with_service_key(service_key)
+        def with_key(self, service_key: object | None = None) -> Self:
+            self._builder = self._builder.with_service_key(service_key or uuid4().hex)
             return self
 
         def instance(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
-            instance = service_type() if service_type else self._service_type()
-            return self._builder.with_instance(instance).build()
+            instance = service_type() if service_type else self._factory.service_type()
+            return self._build(self._builder.with_instance(instance), service_type)
 
         def i_type(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
-            return self._builder.with_implementation_type(
-                service_type or self._builder.service_type
-            ).build()
+            return self._build(
+                self._builder.with_implementation_type(
+                    service_type or self._factory.service_type
+                ),
+                service_type,
+            )
 
         def factory(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
-            instance_func = service_type or self._service_type
+            instance_func = service_type or self._factory.service_type
             if self._builder.service_key is not None:
-                return self._builder.with_factory(lambda _, __: instance_func()).build()
+                return self._build(
+                    self._builder.with_factory(lambda _, __: instance_func()),
+                    service_type,
+                )
             else:
-                return self._builder.with_factory(lambda _: instance_func()).build()
+                return self._build(
+                    self._builder.with_factory(lambda _: instance_func()),
+                    service_type,
+                )
+
+        def _build(
+            self,
+            builder: _Builder | None = None,
+            service_type: type[Service] | None = None,
+        ) -> ServiceDescriptor:
+            builder = builder or self._builder
+            return builder.with_service_type(
+                service_type or self._factory.service_type
+            ).build()
 
     @property
     def singleton(self) -> "_LifetimedServiceFactory":
-        return self._LifetimedServiceFactory(
-            self,
-            self._builder.with_lifetime(ServiceLifetime.SINGLETON),
-        )
+        return self._LifetimedServiceFactory(self, ServiceLifetime.SINGLETON)
 
     @property
     def transient(self) -> "_LifetimedServiceFactory":
-        return self._LifetimedServiceFactory(
-            self,
-            self._builder.with_lifetime(ServiceLifetime.TRANSIENT),
-        )
+        return self._LifetimedServiceFactory(self, ServiceLifetime.TRANSIENT)
 
     @property
     def scoped(self) -> "_LifetimedServiceFactory":
-        return self._LifetimedServiceFactory(
-            self,
-            self._builder.with_lifetime(ServiceLifetime.SCOPED),
-        )
+        return self._LifetimedServiceFactory(self, ServiceLifetime.SCOPED)
 
     @property
     def service_type(self) -> type[Service]:
