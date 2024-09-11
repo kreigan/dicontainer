@@ -189,20 +189,20 @@ class ServiceFactory:
             self._builder = self._builder.with_service_key(service_key)
             return self
 
-        def with_instance(
+        def instance(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
             instance = service_type() if service_type else self._service_type()
             return self._builder.with_instance(instance).build()
 
-        def with_type(
+        def i_type(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
             return self._builder.with_implementation_type(
                 service_type or self._builder.service_type
             ).build()
 
-        def with_factory(
+        def factory(
             self, service_type: type[Service] | None = None
         ) -> ServiceDescriptor:
             instance_func = service_type or self._service_type

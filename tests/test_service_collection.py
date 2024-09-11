@@ -44,19 +44,19 @@ def test_cannot_modify_readonly(
 
 
 def test_index(collection_factory: ServiceCollectionFactory):
-    service = collection_factory.service_factory.singleton.with_instance()
+    service = collection_factory.service_factory.singleton.instance()
     collection = collection_factory.singleton_instance(service)
     assert collection.index(service) == 0
 
 
 def test_count(collection_factory: ServiceCollectionFactory):
-    service = collection_factory.service_factory.singleton.with_instance()
+    service = collection_factory.service_factory.singleton.instance()
     collection = collection_factory.singleton_instance(service)
     assert collection.count(service) == 1
 
 
 def test_contains(collection_factory: ServiceCollectionFactory):
-    service = collection_factory.service_factory.singleton.with_instance()
+    service = collection_factory.service_factory.singleton.instance()
     collection = collection_factory.singleton_instance(service)
     assert service in collection
 
@@ -65,10 +65,8 @@ def test_reversed(
     empty_collection: ServiceCollection,
     service_factory: ServiceFactory,
 ):
-    service_factory.service_type = None
-
-    service_1 = service_factory.singleton.with_instance()
-    service_2 = service_factory.singleton.with_instance()
+    service_1 = service_factory.singleton.instance()
+    service_2 = service_factory.singleton.instance()
 
     empty_collection.append(service_1)
     empty_collection.append(service_2)
@@ -84,11 +82,12 @@ def test_insert(empty_collection: ServiceCollection, service_factory: ServiceFac
     with pytest.raises(TypeError, match=f"Expected {ServiceDescriptor} but got {int}"):
         empty_collection.insert(0, int)  # pyright: ignore[reportArgumentType]
 
-    service = service_factory.singleton.with_instance()
+    service = service_factory.singleton.instance()
     empty_collection.insert(0, service)
     assert empty_collection[0] == service
 
-    service_factory.service_type = None
-    service_2 = service_factory.singleton.with_instance()
+    service_2 = service_factory.singleton.instance()
+    assert service_2 != service
+
     empty_collection.insert(0, service_2)
     assert empty_collection[0] == service_2

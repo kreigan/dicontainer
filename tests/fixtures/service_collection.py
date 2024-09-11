@@ -45,71 +45,67 @@ class ServiceCollectionFactory:
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new singleton service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.singleton.with_instance())
+        return self._add(service or self.service_factory.singleton.instance())
 
     def transient_instance(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new transient service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.transient.with_instance())
+        return self._add(service or self.service_factory.transient.instance())
 
     def scoped_instance(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new scoped service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.scoped.with_instance())
+        return self._add(service or self.service_factory.scoped.instance())
 
     def singleton_type(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new singleton service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.singleton.with_type())
+        return self._add(service or self.service_factory.singleton.i_type())
 
     def transient_type(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new transient service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.transient.with_type())
+        return self._add(service or self.service_factory.transient.i_type())
 
     def scoped_type(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new scoped service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.scoped.with_type())
+        return self._add(service or self.service_factory.scoped.i_type())
 
     def singleton_factory(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new singleton service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.singleton.with_factory())
+        return self._add(service or self.service_factory.singleton.factory())
 
     def transient_factory(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new transient service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.transient.with_factory())
+        return self._add(service or self.service_factory.transient.factory())
 
     def scoped_factory(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new scoped service to the collection copy and returns it."""
-        return self._add(service or self.service_factory.scoped.with_factory())
+        return self._add(service or self.service_factory.scoped.factory())
 
     def singleton_keyed_instance(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new singleton keyed service to the collection copy and returns it."""
-        return self._add(
-            service or self.keyed_service_factory.singleton.with_instance()
-        )
+        return self._add(service or self.keyed_service_factory.singleton.instance())
 
     def transient_keyed_instance(
         self, service: ServiceDescriptor | None = None
     ) -> ServiceCollection:
         """Adds a new transient keyed service to the collection copy and returns it."""
-        return self._add(
-            service or self.keyed_service_factory.transient.with_instance()
-        )
+        return self._add(service or self.keyed_service_factory.transient.instance())
 
     def _add(self, service: ServiceDescriptor) -> ServiceCollection:
         collection = self.get_collection()
