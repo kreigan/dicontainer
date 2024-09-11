@@ -1,5 +1,4 @@
 from typing import Any
-from unittest.mock import patch
 
 import pytest
 
@@ -19,6 +18,29 @@ def test_collection_to_readonly(empty_collection: ServiceCollection):
     assert not empty_collection.is_readonly, "New collection must be mutable"
     empty_collection.make_readonly()
     assert empty_collection.is_readonly, "Collection must be read-only"
+
+
+@pytest.mark.parametrize(
+    ("method", "args"),
+    [
+        pytest.param("insert", (0, None), id="insert"),
+        pytest.param("__setitem__", (0, None), id="__setitem__"),
+        pytest.param("__delitem__", (0,), id="__delitem__"),
+        pytest.param("append", (None,), id="append"),
+        pytest.param("clear", (), id="clear"),
+        pytest.param("extend", (None,), id="extend"),
+        pytest.param("reverse", (), id="reverse"),
+        pytest.param("pop", (0,), id="pop"),
+        pytest.param("remove", (None,), id="remove"),
+        pytest.param("__iadd__", (None,), id="__iadd__"),
+    ],
+)
+def test_cannot_modify_readonly(
+    empty_collection: ServiceCollection, method: str, args: tuple[Any]
+):
+    empty_collection.make_readonly()
+    with pytest.raises(RuntimeError, match="cannot be modified"):
+        getattr(empty_collection, method)(*args)
 
 
 def test_index(collection_factory: ServiceCollectionFactory):
@@ -59,12 +81,6 @@ def test_reversed(
 
 
 def test_insert(empty_collection: ServiceCollection, service_factory: ServiceFactory):
-    with (
-        patch.object(empty_collection, "_readonly", return_value=True),
-        pytest.raises(RuntimeError, match="cannot be modified"),
-    ):
-        empty_collection.insert(0, service_factory.singleton.with_instance())
-
     with pytest.raises(TypeError, match=f"Expected {ServiceDescriptor} but got {int}"):
         empty_collection.insert(0, int)  # pyright: ignore[reportArgumentType]
 
@@ -76,20 +92,3 @@ def test_insert(empty_collection: ServiceCollection, service_factory: ServiceFac
     service_2 = service_factory.singleton.with_instance()
     empty_collection.insert(0, service_2)
     assert empty_collection[0] == service_2
-
-
-@pytest.mark.parametrize(
-    ("method", "args"),
-    [
-        pytest.param("insert", (0, None), id="insert"),
-        pytest.param("__setitem__", (0, None), id="__setitem__"),
-        pytest.param("__delitem__", (0,), id="__delitem__"),
-        ("append", (None,)),
-    ],  # type: ignore
-)
-def test_cannot_modify_readonly(
-    empty_collection: ServiceCollection, method: str, args: tuple[Any]
-):
-    empty_collection.make_readonly()
-    with pytest.raises(RuntimeError, match="cannot be modified"):
-        getattr(empty_collection, method)(*args)
