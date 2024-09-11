@@ -91,3 +91,55 @@ def test_insert(empty_collection: ServiceCollection, service_factory: ServiceFac
 
     empty_collection.insert(0, service_2)
     assert empty_collection[0] == service_2
+
+
+def test_try_add(
+    empty_collection: ServiceCollection,
+    service_factory: ServiceFactory,
+):
+    service = service_factory.singleton.instance()
+
+    assert len(empty_collection) == 0, "Collection must be empty"
+
+    empty_collection.try_add(service)
+
+    assert len(empty_collection) == 1, "Service must be added to the collection"
+    assert service in empty_collection, "Service must be in the collection"
+
+    empty_collection.try_add(service)
+
+    assert len(empty_collection) == 1, "Service must not be added repeatedely"
+
+
+def test_try_add_keyed(
+    empty_collection: ServiceCollection,
+    service_factory: ServiceFactory,
+):
+    factory = service_factory.singleton
+    service_key = "service_1"
+    service_1 = factory.with_key(service_key).instance()
+    assert service_1.service_key == service_key, "Service must have a key"
+
+    assert len(empty_collection) == 0, "Collection must be empty"
+    empty_collection.try_add(service_1)
+
+    assert len(empty_collection) == 1, "Service must be added to the collection"
+    assert service_1 in empty_collection, "Service must be in the collection"
+
+    service_2 = factory.with_key(service_key).instance()
+    assert service_2.service_key == service_key, "Services must have the same key"
+    assert (
+        service_2.service_type != service_1.service_type
+    ), "Service must have a different type"
+    empty_collection.try_add(service_2)
+
+    assert len(empty_collection) == 2, "Service with another type must be added"
+
+    service_3 = factory.with_key("service_3").instance(service_2.service_type)
+    assert service_3.service_key != service_key, "Service must have a different key"
+    assert (
+        service_3.service_type == service_2.service_type
+    ), "Service must have the same type"
+    empty_collection.try_add(service_3)
+
+    assert len(empty_collection) == 3, "Service with another key must be added"
