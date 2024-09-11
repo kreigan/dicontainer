@@ -9,7 +9,7 @@ from typing import Protocol, TypeVar, cast, overload
 
 from typing_extensions import Self
 
-from .util import Ensure
+from .util import Ensure, is_iterable
 
 
 class ServiceLifetime(Enum):
@@ -575,8 +575,8 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
             Ensure.is_type(value, ServiceDescriptor)
             self._descriptors[index] = cast(ServiceDescriptor, value)
         else:
+            Ensure.is_type(value, Iterable[ServiceDescriptor])
             value = cast(Iterable[ServiceDescriptor], value)
-            Ensure.all_in_iterable(value, ServiceDescriptor)
             self._descriptors[index] = value
 
     @overload
@@ -600,7 +600,7 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
     def extend(self, values: Iterable[ServiceDescriptor]) -> None:
         self._check_readonly()
-        Ensure.all_in_iterable(values, ServiceDescriptor)
+        Ensure.is_type(values, Iterable[ServiceDescriptor])
         self._descriptors.extend(values)
 
     def reverse(self) -> None:
@@ -618,7 +618,7 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
     def __iadd__(self, values: Iterable[ServiceDescriptor]) -> Self:
         self._check_readonly()
-        Ensure.all_in_iterable(values, ServiceDescriptor)
+        Ensure.is_type(values, Iterable[ServiceDescriptor])
         self._descriptors += values
         return self
 
@@ -738,11 +738,11 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
         Ensure.not_none(descriptor)
 
-        if isinstance(descriptor, Iterable):
+        if is_iterable(descriptor, ServiceDescriptor):
             for d in descriptor:
                 _try_add_enumerable(d)
         else:
-            _try_add_enumerable(descriptor)
+            _try_add_enumerable(cast(ServiceDescriptor, descriptor))
 
     def replace(self, descriptor: ServiceDescriptor) -> Self:
         """Removes the first service in collection with the same service type

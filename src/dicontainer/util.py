@@ -1,11 +1,16 @@
+import typing
+
 from collections.abc import Iterable
-from typing import Any, TypeVar
+from typing import Any, TypeGuard, TypeVar
+
+
+# ruff: noqa: ANN401    # Any values are okay in this file
 
 
 _T = TypeVar("_T")
 
 
-def is_iterable(value: Any) -> bool:
+def is_iterable(value: Any, t: type[_T]) -> TypeGuard[Iterable[_T]]:
     """Checks if the given value is an iterable.
 
     Args:
@@ -15,10 +20,9 @@ def is_iterable(value: Any) -> bool:
         bool: True if the value is an iterable, False otherwise
     """
     try:
-        iter(value)
+        return all(isinstance(item, t) for item in value)
     except TypeError:
         return False
-    return True
 
 
 class Ensure:
@@ -36,8 +40,9 @@ class Ensure:
         """Ensures the given value is of the expected type or raises a TypeError."""
         valid = True
 
-        if isinstance(expected_type, Iterable):
-            valid = is_iterable(value)
+        origin = typing.get_origin(expected_type)
+        if origin is Iterable:
+            valid = is_iterable(value, typing.get_args(expected_type)[0])
         else:
             valid = isinstance(value, expected_type)
 
@@ -45,15 +50,6 @@ class Ensure:
             raise TypeError(message or f"Expected {expected_type} but got {value}")
 
     @staticmethod
-    def is_iterable(value: Any, message: str | None = None) -> None:
+    def is_iterable(value: Any, t: type[_T], message: str | None = None) -> None:
         """Ensures the given value is an iterable or raises a TypeError."""
-        Ensure.is_type(value, Iterable, message)
-
-    @staticmethod
-    def all_in_iterable(
-        iterable: Iterable[_T], expected_type: _T, message: str | None = None
-    ) -> None:
-        """Ensures all values in the given iterable are of the expected type or raises a TypeError."""
-        Ensure.is_iterable(iterable)
-        for item in iterable:
-            Ensure.is_type(item, type(expected_type), message)
+        Ensure.is_type(value, t, message)
