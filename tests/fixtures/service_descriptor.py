@@ -170,11 +170,12 @@ class ServiceFactory:
     def __init__(
         self, builder: _Builder, service_type: type[Service] | None = None
     ) -> None:
-        """Initializes a new instance of the ServiceDescriptor class.
+        """Initializes a new instance of the ServiceDescriptor class. If `service_type`
+        is not provided, a new type is generated for each instance.
 
         Args:
             builder (_Builder): The builder object used to build the service.
-            service_type (type[Service], optional): The type of the service. Defaults to DummyService.
+            service_type (type[Service], optional): The type of the service.
         """
         self._builder = builder
         self._service_type = service_type
