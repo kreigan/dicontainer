@@ -36,7 +36,7 @@ class Ensure:
 
     @staticmethod
     def not_none(value: Any, message: str | None = None) -> None:
-        """Ensures the given value is not None or raises a TypeError."""
+        """Ensures the given value is not None or raises a ValueError."""
         if value is None:
             msg = message or "Value cannot be None"
             raise ValueError(msg)
