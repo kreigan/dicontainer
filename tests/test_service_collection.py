@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -143,3 +143,51 @@ def test_try_add_keyed(
     empty_collection.try_add(service_3)
 
     assert len(empty_collection) == 3, "Service with another key must be added"
+
+
+def test_replace(collection_factory: ServiceCollectionFactory):
+    collection = collection_factory.get_collection()
+    with pytest.raises(ValueError, match="cannot be None"):
+        collection.replace(cast(ServiceDescriptor, None))
+
+    assert len(collection) == 0, "Collection must be empty"
+
+    keyed_singleton = collection_factory.service_factory.singleton.with_key("key_1")
+    service = keyed_singleton.instance()
+    collection.replace(service)
+
+    assert len(collection) == 1, "New service must be added"
+    assert collection[0] == service
+
+    similar_service = keyed_singleton.i_type(collection[0].service_type)
+    collection.replace(similar_service)
+
+    assert len(collection) == 1, "Service must be replaced"
+    assert collection[0] == similar_service
+
+    different_service = keyed_singleton.with_key("key_2").i_type()
+    collection.replace(different_service)
+
+    assert len(collection) == 2, "Service with new key must be added"
+
+
+def test_remove_all(collection_factory: ServiceCollectionFactory):
+    collection = collection_factory.get_collection()
+    singleton_factory = collection_factory.service_factory.singleton
+    service = singleton_factory.instance()
+
+    collection += [service, service, service]
+    assert len(collection) == 3, "Collection must have 3 services"
+
+    collection.remove_all(service.service_type)
+    assert len(collection) == 0, "All services must be removed"
+
+    service = singleton_factory.with_key("some_key").instance()
+    collection += [service, service, service]
+    assert len(collection) == 3, "Collection must have 3 services"
+
+    collection.remove_all(service.service_type)
+    assert len(collection) == 3, "Services with different keys must not be removed"
+
+    collection.remove_all(service.service_type, "some_key")
+    assert len(collection) == 0, "All services must be removed"

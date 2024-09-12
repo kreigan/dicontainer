@@ -792,7 +792,7 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         self.append(descriptor)
         return self
 
-    def remove_all(self, service_type: type) -> Self:
+    def remove_all(self, service_type: type, service_key: object | None = None) -> Self:
         """Removes all services of type `service_type` in collection.
 
         Args:
@@ -802,9 +802,15 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
             ServiceCollection: The current service collection for chaining.
         """
         Ensure.not_none(service_type)
-        for i, service in enumerate(self):
-            if service.service_type == service_type and service.service_key is None:
+        i = len(self) - 1
+        while i >= 0:
+            service = self[i]
+            if (
+                service.service_type == service_type
+                and service.service_key == service_key
+            ):
                 del self[i]
+            i -= 1
 
         return self
 
