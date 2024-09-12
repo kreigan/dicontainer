@@ -9,7 +9,7 @@ from typing import Protocol, TypeVar, cast, overload
 
 from typing_extensions import Self
 
-from .util import Ensure, is_iterable
+from .util import Ensure, is_type
 
 
 class ServiceLifetime(Enum):
@@ -738,7 +738,7 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
 
         Ensure.not_none(descriptor)
 
-        if is_iterable(descriptor, ServiceDescriptor):
+        if is_type(descriptor, Iterable[ServiceDescriptor]):
             for d in descriptor:
                 _try_add_enumerable(d)
         else:
