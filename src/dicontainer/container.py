@@ -598,6 +598,19 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         self._check_readonly()
         self._descriptors.clear()
 
+    def copy(self) -> "ServiceCollection":
+        """Creates a shallow copy of the collection. The copy is not read-only.
+
+        Returns:
+            ServiceCollection: A new instance of `ServiceCollection` with the same elements.
+        """
+        collection = ServiceCollection()
+        collection.extend(self)
+        return collection
+
+    def __copy__(self) -> "ServiceCollection":
+        return self.copy()
+
     def extend(self, values: Iterable[ServiceDescriptor]) -> None:
         self._check_readonly()
         Ensure.is_type(values, Iterable[ServiceDescriptor])
@@ -615,6 +628,18 @@ class ServiceCollection(MutableSequence[ServiceDescriptor]):
         self._check_readonly()
         Ensure.is_type(value, ServiceDescriptor)
         self._descriptors.remove(value)
+
+    def __add__(self, other: Iterable[ServiceDescriptor]) -> "ServiceCollection":
+        Ensure.is_type(other, Iterable[ServiceDescriptor])
+        collection = ServiceCollection()
+        collection.extend(self)
+        return collection
+
+    def __radd__(self, other: Iterable[ServiceDescriptor]) -> "ServiceCollection":
+        Ensure.is_type(other, Iterable[ServiceDescriptor])
+        collection = ServiceCollection()
+        collection.extend(other)
+        return collection
 
     def __iadd__(self, values: Iterable[ServiceDescriptor]) -> Self:
         self._check_readonly()
