@@ -5,11 +5,11 @@ from abc import abstractmethod
 from collections.abc import Callable, Iterable, Iterator, MutableSequence
 from enum import Enum
 from functools import partial
-from typing import Protocol, TypeVar, cast, overload
+from typing import TypeVar, cast, overload
 
 from typing_extensions import Self
 
-from .util import Ensure, is_type
+from .util import Ensure, class_fqdn, is_type
 
 
 class ServiceLifetime(Enum):
@@ -25,7 +25,10 @@ class ServiceLifetime(Enum):
     """Specifies that a new instance of the service will be created every time it is requested."""
 
 
-class ServiceProvider(Protocol):
+TService = TypeVar("TService", bound=object, covariant=True)
+
+
+class ServiceProvider:
     """Defines a mechanism for retrieving a service object."""
 
     @abstractmethod
@@ -40,8 +43,64 @@ class ServiceProvider(Protocol):
         """
         raise NotImplementedError
 
+    def get_service_typed(self, service_type: type[TService]) -> TService | None:
+        """Get service of type `TService` from the service provider.
 
-TService = TypeVar("TService", bound=object, covariant=True)
+        Args:
+            service_type (type): The type of service object to get.
+
+        Returns:
+            object: A service object of type `TService` or `None` if there is no such service.
+        """
+        return cast(TService, self.get_service(service_type))
+
+    def get_required_service(self, service_type: type) -> object:
+        """Gets service of type `service_type` from the service provider.
+
+        Args:
+            service_type (type): An object that specifies the type of service object to get.
+
+        Returns:
+            object: A service object of type `service_type`.
+
+        Raises:
+            RuntimeError: Raised when there is no service object of type `service_type`.
+        """
+        Ensure.not_none(service_type)
+
+        service = self.get_service(service_type)
+        if service is None:
+            raise RuntimeError(
+                f"No service for type '{class_fqdn(service_type)}' has been registered."
+            )
+        return service
+
+    def get_required_service_typed(self, service_type: type[TService]) -> TService:
+        """Gets service of type `service_type` from the service provider.
+
+        Args:
+            service_type (type): An object that specifies the type of service object to get.
+
+        Returns:
+            object: A service object of type `service_type`.
+
+        Raises:
+            RuntimeError: Raised when there is no service object of type `service_type`.
+        """
+        return cast(TService, self.get_required_service(service_type))
+
+    def get_services(self, service_type: type) -> Iterable[object | None]:
+        """Gets all service objects of the specified type.
+
+        Args:
+            service_type (type): An object that specifies the type of service object to get.
+
+        Returns:
+            Iterable[object]: A collection of service objects of type `service_type`.
+        """
+        raise NotImplementedError
+
+
 TImplementation = TypeVar("TImplementation", bound=object, covariant=True)
 
 _ImplementationFactory = Callable[[ServiceProvider], object]

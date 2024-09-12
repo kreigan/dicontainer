@@ -46,3 +46,18 @@ class Ensure:
         """Ensures the given value is of the expected type or raises a TypeError."""
         if not is_type(value, expected_type):
             raise TypeError(message or f"Expected {expected_type} but got {value}")
+
+
+def class_fqdn(cls: type) -> str:
+    """Returns the fully qualified name of a class.
+
+    Args:
+        cls (type): The class to get the fully qualified name of.
+
+    Returns:
+        str: The fully qualified name of the class.
+    """
+    module = cls.__module__
+    if module == "builtins":
+        return cls.__qualname__  # avoid outputs like 'builtins.str'
+    return f"{module}.{cls.__qualname__}"
