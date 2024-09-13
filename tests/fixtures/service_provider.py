@@ -10,7 +10,11 @@ class MockServiceProvider(ServiceProvider):
     service object for any service type.
     """
 
-    def get_service(self, service_type: type) -> object | None:
+    def get_service(
+        self,
+        service_type: type,
+        service_key: object | None = None,  # noqa: ARG002
+    ) -> object | None:
         return Mock(spec=service_type)
 
 

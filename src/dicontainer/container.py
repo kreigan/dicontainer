@@ -32,33 +32,42 @@ class ServiceProvider:
     """Defines a mechanism for retrieving a service object."""
 
     @abstractmethod
-    def get_service(self, service_type: type) -> object | None:
+    def get_service(
+        self, service_type: type, service_key: object | None = None
+    ) -> object | None:
         """Gets the service object of the specified type.
 
         Args:
             service_type (type): An object that specifies the type of service object to get.
+            service_key (object): An object that specifies the key of the service object to get.
 
         Returns:
             object: A service object, or `None` if there is no service object of type `service_type`.
         """
         raise NotImplementedError
 
-    def get_service_typed(self, service_type: type[TService]) -> TService | None:
+    def get_service_typed(
+        self, service_type: type[TService], service_key: object | None = None
+    ) -> TService | None:
         """Get service of type `TService` from the service provider.
 
         Args:
             service_type (type): The type of service object to get.
+            service_key (object): An object that specifies the key of the service object to get.
 
         Returns:
             object: A service object of type `TService` or `None` if there is no such service.
         """
-        return cast(TService, self.get_service(service_type))
+        return cast(TService, self.get_service(service_type, service_key))
 
-    def get_required_service(self, service_type: type) -> object:
+    def get_required_service(
+        self, service_type: type, service_key: object | None = None
+    ) -> object:
         """Gets service of type `service_type` from the service provider.
 
         Args:
             service_type (type): An object that specifies the type of service object to get.
+            service_key (object): An object that specifies the key of the service object to get.
 
         Returns:
             object: A service object of type `service_type`.
@@ -68,18 +77,21 @@ class ServiceProvider:
         """
         Ensure.not_none(service_type)
 
-        service = self.get_service(service_type)
+        service = self.get_service(service_type, service_key)
         if service is None:
             raise RuntimeError(
                 f"No service for type '{class_fqdn(service_type)}' has been registered."
             )
         return service
 
-    def get_required_service_typed(self, service_type: type[TService]) -> TService:
+    def get_required_service_typed(
+        self, service_type: type[TService], service_key: object | None = None
+    ) -> TService:
         """Gets service of type `service_type` from the service provider.
 
         Args:
             service_type (type): An object that specifies the type of service object to get.
+            service_key (object): An object that specifies the key of the service object to get.
 
         Returns:
             object: A service object of type `service_type`.
@@ -87,18 +99,7 @@ class ServiceProvider:
         Raises:
             RuntimeError: Raised when there is no service object of type `service_type`.
         """
-        return cast(TService, self.get_required_service(service_type))
-
-    def get_services(self, service_type: type) -> Iterable[object | None]:
-        """Gets all service objects of the specified type.
-
-        Args:
-            service_type (type): An object that specifies the type of service object to get.
-
-        Returns:
-            Iterable[object]: A collection of service objects of type `service_type`.
-        """
-        raise NotImplementedError
+        return cast(TService, self.get_required_service(service_type, service_key))
 
 
 TImplementation = TypeVar("TImplementation", bound=object, covariant=True)
